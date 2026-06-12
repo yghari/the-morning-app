@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Fajr Ritual">
+<meta name="theme-color" content="#09090f">
+<link rel="manifest" id="pwa-manifest">
+<title>The Morning</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+
+/* ─── TOKENS ─── */
+:root {
+  --bg:       #09090f;
+  --bg2:      #111118;
+  --bg3:      #1c1c26;
+  --rim:      #2a2a38;
+  --muted:    #6b6b88;
+  --silver:   #a8a8c0;
+  --cream:    #ede9e0;
+  --dawn:     #d4924a;
+  --dawn-dim: #3d2510;
+  --dawn-glow:rgba(212,146,74,.18);
+  --red:      #b84040;
+  --green:    #4a9e6a;
+  --r: 16px;
+  --serif: 'Cormorant Garamond', Georgia, serif;
+  --sans:  'DM Sans', system-ui, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--cream); font-family: var(--sans); }
+
+/* ─── LAYER SYSTEM ─── */
+.layer { position: fixed; inset: 0; display: flex; flex-direction: column; transition: opacity .32s cubic-bezier(.4,0,.2,1), transform .32s cubic-bezier(.4,0,.2,1); }
+.layer.gone { opacity: 0; pointer-events: none; transform: translateY(16px); }
+.layer.behind { opacity: 0; pointer-events: none; transform: translateY(-16px); }
+.scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.scroll::-webkit-scrollbar { display: none; }
+
+/* ─── TOPBAR ─── */
+.topbar { display: flex; align-items: center; padding: 14px 20px; flex-shrink: 0; gap: 8px; }
+.tb-back { font-family: var(--sans); font-size: 13px; color: var(--dawn); background: none; border: none; cursor: pointer; min-width: 48px; }
+.tb-title { font-family: var(--serif); font-size: 17px; color: var(--cream); flex: 1; text-align: center; letter-spacing: .02em; font-weight: 400; }
+.tb-right { min-width: 48px; text-align: right; }
+.tb-action { font-family: var(--sans); font-size: 13px; color: var(--muted); background: none; border: none; cursor: pointer; }
+
+/* ═══════════════════════════
+   SPLASH
+═══════════════════════════ */
+#l-splash {
+  background: var(--bg);
+  align-items: center; justify-content: center;
+  text-align: center; padding: 0 32px;
+  gap: 0;
+}
+.splash-moon {
+  font-size: 44px;
+  margin-bottom: 24px;
+  filter: drop-shadow(0 0 20px var(--dawn-glow));
+  animation: rise 3s ease-in-out infinite;
+}
+@keyframes rise { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+.splash-ar {
+  font-family: var(--serif);
+  font-size: 22px; color: var(--dawn);
+  margin-bottom: 20px; opacity: .85;
+}
+.splash-title {
+  font-family: var(--serif);
+  font-size: 38px; font-weight: 300;
+  color: var(--cream); line-height: 1.2;
+  margin-bottom: 10px;
+}
+.splash-title strong { font-weight: 600; color: var(--dawn); }
+.splash-sub {
+  font-family: var(--sans);
+  font-size: 14px; color: var(--muted);
+  line-height: 1.7; margin-bottom: 52px;
+  font-weight: 300;
+}
+.splash-cta {
+  width: 100%; padding: 17px;
+  background: var(--dawn); border: none; border-radius: var(--r);
+  font-family: var(--sans); font-size: 15px; font-weight: 500;
+  color: #1a0e00; cursor: pointer; transition: opacity .2s;
+  letter-spacing: .02em;
+}
+.splash-cta:active { opacity: .85; }
+
+/* ═══════════════════════════
+   HOME
+═══════════════════════════ */
+#l-home { background: var(--bg); }
+
+/* Header */
+.home-head {
+  padding: 24px 20px 20px;
+  flex-shrink: 0;
+}
+.home-date {
+  font-family: var(--sans); font-size: 11px;
+  color: var(--muted); letter-spacing: .1em;
+  text-transform: uppercase; margin-bottom: 6px;
+}
+.home-title {
+  font-family: var(--serif); font-size: 28px;
+  font-weight: 300; color: var(--cream);
+  line-height: 1.2;
+}
+.home-title strong { font-weight: 600; }
+
+/* Arc progress */
+.arc-wrap {
+  display: flex; flex-direction: column;
+  align-items: center; padding: 10px 20px 0;
+  flex-shrink: 0;
+}
+.arc-svg { width: 200px; height: 110px; overflow: visible; }
+.arc-track { fill: none; stroke: var(--rim); stroke-width: 6; stroke-linecap: round; }
+.arc-fill  { fill: none; stroke: var(--dawn); stroke-width: 6; stroke-linecap: round;
+  transition: stroke-dashoffset .6s cubic-bezier(.4,0,.2,1);
+  filter: drop-shadow(0 0 6px var(--dawn-glow));
+}
+.arc-pct {
+  font-family: var(--serif); font-size: 36px;
+  font-weight: 300; color: var(--cream); text-align: center;
+  margin-top: -8px;
+}
+.arc-label {
+  font-family: var(--sans); font-size: 11px;
+  color: var(--muted); letter-spacing: .08em;
+  text-transform: uppercase; margin-top: 2px;
+  margin-bottom: 16px;
+}
+
+/* Streak row */
+.streak-row { display: flex; gap: 8px; padding: 0 20px 16px; flex-shrink: 0; }
+.streak-pill {
+  flex: 1; background: var(--bg2); border: 1px solid var(--rim);
+  border-radius: 30px; padding: 10px 12px;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.streak-pill.active { border-color: var(--dawn-dim); background: linear-gradient(135deg,#130c04,#1d1206); }
+.streak-n { font-family: var(--serif); font-size: 22px; color: var(--dawn); line-height: 1; }
+.streak-pill:not(.active) .streak-n { color: var(--muted); }
+.streak-l { font-family: var(--sans); font-size: 11px; color: var(--muted); }
+
+/* Start button */
+.start-wrap { padding: 0 20px 16px; flex-shrink: 0; }
+.start-btn {
+  width: 100%; padding: 17px;
+  background: var(--dawn); border: none; border-radius: var(--r);
+  font-family: var(--sans); font-size: 15px; font-weight: 500;
+  color: #1a0e00; cursor: pointer; transition: opacity .2s;
+  letter-spacing: .02em;
+  box-shadow: 0 4px 24px var(--dawn-glow);
+}
+.start-btn:active { opacity: .85; }
+.start-btn:disabled {
+  background: var(--bg3); color: var(--muted);
+  box-shadow: none; border: 1px solid var(--rim);
+}
+.done-msg {
+  text-align: center; padding: 17px;
+  font-family: var(--serif); font-size: 17px;
+  color: var(--green); font-style: italic;
+  display: none;
+}
+
+/* Step list preview */
+.steps-preview { flex: 1; overflow-y: auto; padding: 0 20px 32px; }
+.steps-preview::-webkit-scrollbar { display: none; }
+.step-preview-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 13px 0; border-bottom: 1px solid var(--rim);
+  cursor: pointer; transition: opacity .15s;
+}
+.step-preview-row:last-child { border-bottom: none; }
+.step-preview-row:active { opacity: .7; }
+.spr-icon {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--bg3); border: 1px solid var(--rim);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0; transition: all .3s;
+}
+.spr-icon.done { background: var(--green); border-color: var(--green); filter: drop-shadow(0 0 6px rgba(74,158,106,.3)); }
+.spr-icon.active { border-color: var(--dawn); background: var(--dawn-dim); }
+.spr-text { flex: 1; }
+.spr-name { font-family: var(--serif); font-size: 16px; color: var(--cream); font-weight: 400; }
+.spr-sub  { font-family: var(--sans); font-size: 12px; color: var(--muted); margin-top: 2px; }
+.spr-time {
+  font-family: var(--sans); font-size: 11px;
+  color: var(--muted); background: var(--bg3);
+  padding: 3px 8px; border-radius: 20px;
+}
+.spr-check { font-size: 14px; color: var(--green); display: none; }
+.spr-icon.done ~ .spr-text ~ .spr-time { display: none; }
+
+/* ═══════════════════════════
+   STEP PAGE
+═══════════════════════════ */
+#l-step { background: var(--bg); }
+
+.step-head {
+  padding: 16px 20px 14px; flex-shrink: 0;
+  border-bottom: 1px solid var(--rim);
+}
+.step-progress-bar { height: 2px; background: var(--rim); border-radius: 1px; overflow: hidden; margin-bottom: 14px; }
+.step-progress-fill { height: 100%; background: var(--dawn); border-radius: 1px; transition: width .4s ease; }
+.step-label { font-family: var(--sans); font-size: 11px; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 6px; }
+.step-name { font-family: var(--serif); font-size: 26px; font-weight: 300; color: var(--cream); line-height: 1.2; }
+
+.step-body { flex: 1; overflow-y: auto; padding: 24px 20px 20px; -webkit-overflow-scrolling: touch; }
+.step-body::-webkit-scrollbar { display: none; }
+.step-icon-large { font-size: 48px; margin-bottom: 20px; display: block; }
+
+/* Variants */
+.step-content { margin-bottom: 24px; }
+
+/* Fajr */
+.fajr-check-btn {
+  width: 100%; padding: 20px;
+  background: var(--bg3); border: 1px solid var(--rim);
+  border-radius: var(--r); cursor: pointer;
+  font-family: var(--serif); font-size: 20px;
+  color: var(--cream); font-weight: 300;
+  transition: all .25s; text-align: center;
+  font-style: italic; line-height: 1.5;
+}
+.fajr-check-btn.checked { background: linear-gradient(135deg,#0d1a10,#112016); border-color: var(--green); color: var(--green); }
+.fajr-check-btn:active { transform: scale(.98); }
+.fajr-tip { font-family: var(--sans); font-size: 13px; color: var(--muted); text-align: center; line-height: 1.6; margin-top: 12px; }
+
+/* Quran verse */
+.verse-box {
+  background: linear-gradient(135deg, #0f0d04, #160f00);
+  border: 1px solid var(--dawn-dim);
+  border-radius: var(--r); padding: 20px;
+  margin-bottom: 14px;
+}
+.verse-ar {
+  font-family: var(--serif); font-size: 26px;
+  color: var(--dawn); text-align: right;
+  line-height: 1.8; margin-bottom: 14px;
+  font-weight: 300; direction: rtl;
+}
+.verse-en {
+  font-family: var(--serif); font-size: 17px;
+  color: var(--cream); line-height: 1.7;
+  font-style: italic; font-weight: 300;
+}
+.verse-ref { font-family: var(--sans); font-size: 11px; color: var(--muted); margin-top: 10px; letter-spacing: .06em; }
+.verse-reflect {
+  width: 100%; background: var(--bg3);
+  border: 1px solid var(--rim); border-radius: var(--r);
+  padding: 14px; font-family: var(--serif);
+  font-size: 16px; font-style: italic;
+  color: var(--cream); line-height: 1.65;
+  resize: none; outline: none; min-height: 80px;
+  caret-color: var(--dawn);
+  transition: border-color .2s;
+}
+.verse-reflect:focus { border-color: var(--dawn-dim); }
+.verse-reflect::placeholder { color: var(--rim); }
+
+/* Affirmations */
+.aff-item {
+  background: var(--bg2); border-left: 2px solid var(--dawn-dim);
+  border-radius: 0 var(--r) var(--r) 0;
+  padding: 14px 16px; margin-bottom: 10px;
+  cursor: pointer; transition: all .2s;
+}
+.aff-item.read { border-left-color: var(--dawn); background: linear-gradient(90deg,#120a00,var(--bg2)); }
+.aff-item:active { transform: scale(.99); }
+.aff-item-text {
+  font-family: var(--serif); font-size: 16px;
+  color: var(--cream); line-height: 1.65;
+  font-weight: 300;
+}
+.aff-item.read .aff-item-text { color: var(--cream); }
+.aff-item-check { font-size: 12px; color: var(--dawn); display: none; margin-top: 4px; }
+.aff-item.read .aff-item-check { display: block; }
+.aff-hint { font-family: var(--sans); font-size: 12px; color: var(--muted); text-align: center; margin-bottom: 14px; }
+
+/* Intention */
+.intention-area {
+  width: 100%; background: var(--bg3);
+  border: 1px solid var(--rim); border-radius: var(--r);
+  padding: 18px; font-family: var(--serif);
+  font-size: 20px; font-style: italic;
+  color: var(--cream); line-height: 1.7;
+  resize: none; outline: none; min-height: 120px;
+  caret-color: var(--dawn);
+  transition: border-color .2s;
+}
+.intention-area:focus { border-color: var(--dawn-dim); }
+.intention-area::placeholder { color: var(--muted); font-style: italic; }
+.intention-prompt {
+  font-family: var(--serif); font-size: 17px;
+  color: var(--silver); font-style: italic;
+  line-height: 1.65; margin-bottom: 16px;
+}
+
+/* Yesterday rating */
+.rating-question {
+  font-family: var(--serif); font-size: 20px;
+  color: var(--cream); font-style: italic;
+  line-height: 1.6; margin-bottom: 20px; font-weight: 300;
+}
+.rating-scale { display: flex; gap: 6px; margin-bottom: 8px; }
+.r-dot {
+  flex: 1; aspect-ratio: 1; border-radius: 50%;
+  background: var(--bg3); border: 1px solid var(--rim);
+  font-family: var(--sans); font-size: 12px; font-weight: 500;
+  color: var(--muted); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s;
+}
+.r-dot:active { transform: scale(.92); }
+.r-dot.sel-low  { background: #3a0a0a; border-color: var(--red); color: #ff8888; }
+.r-dot.sel-mid  { background: #2a1e00; border-color: #8a6000; color: var(--dawn); }
+.r-dot.sel-high { background: #0a2010; border-color: var(--green); color: #88ffaa; }
+.rating-labels { display: flex; justify-content: space-between; font-family: var(--sans); font-size: 11px; color: var(--muted); margin-bottom: 20px; }
+.rating-reflection {
+  width: 100%; background: var(--bg3);
+  border: 1px solid var(--rim); border-radius: var(--r);
+  padding: 14px; font-family: var(--serif);
+  font-size: 16px; font-style: italic;
+  color: var(--cream); line-height: 1.65;
+  resize: none; outline: none; min-height: 80px;
+  caret-color: var(--dawn);
+  transition: border-color .2s;
+}
+.rating-reflection:focus { border-color: var(--dawn-dim); }
+.rating-reflection::placeholder { color: var(--muted); }
+
+/* Step footer */
+.step-foot { padding: 12px 20px 24px; flex-shrink: 0; }
+.step-next {
+  width: 100%; padding: 17px;
+  background: var(--dawn); border: none; border-radius: var(--r);
+  font-family: var(--sans); font-size: 15px; font-weight: 500;
+  color: #1a0e00; cursor: pointer; transition: opacity .2s;
+  letter-spacing: .02em;
+}
+.step-next:active { opacity: .85; }
+.step-next:disabled { background: var(--bg3); color: var(--muted); border: 1px solid var(--rim); }
+
+/* ═══════════════════════════
+   COMPLETE
+═══════════════════════════ */
+#l-complete {
+  background: var(--bg);
+  align-items: center; justify-content: center;
+  text-align: center; padding: 0 28px;
+}
+.complete-glyph { font-size: 56px; margin-bottom: 20px; animation: glyph-in .5s cubic-bezier(.34,1.56,.64,1) both; }
+@keyframes glyph-in { from{transform:scale(0);opacity:0} to{transform:scale(1);opacity:1} }
+.complete-title { font-family: var(--serif); font-size: 34px; font-weight: 300; color: var(--cream); margin-bottom: 8px; line-height: 1.2; }
+.complete-title strong { font-weight: 600; color: var(--dawn); }
+.complete-sub { font-family: var(--sans); font-size: 14px; color: var(--muted); line-height: 1.7; margin-bottom: 10px; }
+.complete-streak { font-family: var(--serif); font-size: 52px; color: var(--dawn); margin: 10px 0 4px; }
+.complete-streak-l { font-family: var(--sans); font-size: 11px; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 36px; }
+.complete-verse {
+  background: var(--bg2); border: 1px solid var(--rim);
+  border-radius: var(--r); padding: 16px 20px;
+  margin-bottom: 28px; width: 100%;
+}
+.complete-verse-text { font-family: var(--serif); font-size: 15px; color: var(--silver); font-style: italic; line-height: 1.65; }
+.complete-verse-ref { font-family: var(--sans); font-size: 11px; color: var(--muted); margin-top: 6px; }
+.complete-btn {
+  width: 100%; padding: 16px;
+  background: transparent; border: 1px solid var(--rim);
+  border-radius: var(--r); font-family: var(--sans); font-size: 14px;
+  color: var(--silver); cursor: pointer; transition: all .2s;
+}
+.complete-btn:active { background: var(--bg2); }
+
+/* ═══════════════════════════
+   HISTORY LAYER
+═══════════════════════════ */
+#l-history { background: var(--bg); }
+.hist-empty { text-align: center; padding: 60px 20px; font-family: var(--serif); font-size: 18px; color: var(--muted); font-style: italic; line-height: 1.6; }
+.hist-day {
+  padding: 16px 20px; border-bottom: 1px solid var(--rim);
+  cursor: pointer; transition: background .15s;
+}
+.hist-day:active { background: var(--bg2); }
+.hd-top { display: flex; align-items: center; gap: 10px; }
+.hd-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--dawn); flex-shrink: 0; }
+.hd-date { font-family: var(--sans); font-size: 12px; color: var(--muted); flex: 1; }
+.hd-score { font-family: var(--serif); font-size: 16px; color: var(--dawn); }
+.hd-intention { font-family: var(--serif); font-size: 15px; color: var(--silver); font-style: italic; margin-top: 6px; line-height: 1.55; }
+.hd-detail { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--rim); }
+.hd-detail.open { display: block; }
+.hd-detail-row { font-family: var(--sans); font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+.hd-detail-val { font-family: var(--serif); font-size: 14px; color: var(--silver); font-style: italic; margin-bottom: 10px; line-height: 1.55; }
+
+/* ═══════════════════════════
+   TOAST
+═══════════════════════════ */
+.toast {
+  position: fixed; bottom: 28px; left: 50%;
+  transform: translateX(-50%) translateY(70px);
+  background: var(--bg3); border: 1px solid var(--rim);
+  border-radius: 30px; padding: 10px 22px;
+  font-family: var(--sans); font-size: 13px; color: var(--silver);
+  z-index: 999; transition: transform .28s; white-space: nowrap;
+  pointer-events: none;
+}
+.toast.up { transform: translateX(-50%) translateY(0); }
+
+</style>
+</head>
+<body>
+
+<!-- ═══ SPLASH ═══ -->
+<div class="layer" id="l-splash">
+  <div style="width:100%;max-width:400px;margin:0 auto;padding:0 28px;">
+    <div class="splash-moon">🌙</div>
+    <div class="splash-ar">بسم الله الرحمن الرحيم</div>
+    <div class="splash-title">Your <strong>morning</strong><br>in 30 minutes.</div>
+    <div class="splash-sub">Five things. Every day.<br>Built on Allah — completed before the world wakes up.</div>
+    <button class="splash-cta" onclick="show('home')">Start — بسم الله</button>
+  </div>
+</div>
+
+<!-- ═══ HOME ═══ -->
+<div class="layer gone" id="l-home">
+
+  <div class="home-head">
+    <div class="home-date" id="home-date">—</div>
+    <div class="home-title" id="home-greeting">Good <strong>morning.</strong></div>
+  </div>
+
+  <!-- Arc -->
+  <div class="arc-wrap">
+    <svg class="arc-svg" viewBox="0 0 200 110">
+      <path class="arc-track" d="M 20 100 A 80 80 0 0 1 180 100"/>
+      <path class="arc-fill" id="arc-fill" d="M 20 100 A 80 80 0 0 1 180 100" stroke-dasharray="251.3" stroke-dashoffset="251.3"/>
+    </svg>
+    <div class="arc-pct" id="arc-pct">0%</div>
+    <div class="arc-label" id="arc-label">Begin your ritual</div>
+  </div>
+
+  <!-- Streak -->
+  <div class="streak-row">
+    <div class="streak-pill active">
+      <span style="font-size:16px;">🔥</span>
+      <span class="streak-n" id="s-cur">0</span>
+      <span class="streak-l">day streak</span>
+    </div>
+    <div class="streak-pill">
+      <span class="streak-n" id="s-best">0</span>
+      <span class="streak-l">best</span>
+    </div>
+    <div class="streak-pill">
+      <span class="streak-n" id="s-days">0</span>
+      <span class="streak-l">total days</span>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="start-wrap">
+    <button class="start-btn" id="start-btn" onclick="beginRitual()">Begin ritual</button>
+    <div class="done-msg" id="done-msg">الحمد لله — ritual complete for today ✓</div>
+  </div>
+
+  <!-- Step list -->
+  <div class="steps-preview" id="steps-preview"></div>
+
+</div>
+
+<!-- ═══ STEP ═══ -->
+<div class="layer gone" id="l-step">
+  <div class="topbar">
+    <button class="tb-back" onclick="exitStep()">← Back</button>
+    <div class="tb-title" id="step-tb-title"></div>
+    <div class="tb-right">
+      <button class="tb-action" id="step-skip" onclick="skipStep()">Skip</button>
+    </div>
+  </div>
+  <div class="step-head">
+    <div class="step-progress-bar"><div class="step-progress-fill" id="step-pfill"></div></div>
+    <div class="step-label" id="step-label"></div>
+    <div class="step-name" id="step-name"></div>
+  </div>
+  <div class="step-body scroll" id="step-body"></div>
+  <div class="step-foot">
+    <button class="step-next" id="step-next" onclick="nextStep()">Done — next step →</button>
+  </div>
+</div>
+
+<!-- ═══ COMPLETE ═══ -->
+<div class="layer gone" id="l-complete">
+  <div class="complete-glyph">☀️</div>
+  <div class="complete-title">Ritual <strong>complete.</strong></div>
+  <div class="complete-sub">You showed up before the world woke up.</div>
+  <div class="complete-streak" id="c-streak">0</div>
+  <div class="complete-streak-l">day streak 🔥</div>
+  <div class="complete-verse">
+    <div class="complete-verse-text">"Indeed, Allah will not change the condition of a people until they change what is in themselves."</div>
+    <div class="complete-verse-ref">Quran 13:11</div>
+  </div>
+  <button class="complete-btn" onclick="show('home')">Back to home</button>
+</div>
+
+<!-- ═══ HISTORY ═══ -->
+<div class="layer gone" id="l-history">
+  <div class="topbar">
+    <button class="tb-back" onclick="show('home')">← Home</button>
+    <div class="tb-title">History</div>
+    <div class="tb-right"></div>
+  </div>
+  <div class="scroll" style="padding:0 0 40px;" id="hist-list"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+
+// ════════════════════════════════════════
+// DATA
+// ════════════════════════════════════════
+
+const AFFIRMATIONS = [
+  "Islam is my religion and my identity. Allah is my Lord. Everything I build stands on this.",
+  "I am the hero of my own story. I struggle — therefore I am growing.",
+  "I do not wait to feel ready. I do what I must, regardless of how I feel.",
+  "Silence is my power. I speak only when I have something real to add.",
+  "I remain humble regardless of what I achieve — because I know who gave it to me.",
+  "My self-respect is iron. No failure, no rejection can dissolve who I am.",
+  "I delay gratification. Every denial is a deposit into my future self.",
+  "I build my body, my brotherhood, and my wealth — daily, without negotiation."
+];
+
+const VERSES = [
+  { ar:"وَمَن يَتَوَكَّلْ عَلَى اللَّهِ فَهُوَ حَسْبُهُ", en:"And whoever relies upon Allah — then He is sufficient for him.", ref:"Quran 65:3" },
+  { ar:"إِنَّ مَعَ الْعُسْرِ يُسْرًا", en:"Indeed, with hardship will be ease.", ref:"Quran 94:6" },
+  { ar:"وَلَا تَهِنُوا وَلَا تَحْزَنُوا وَأَنتُمُ الْأَعْلَوْنَ", en:"Do not weaken and do not grieve. You will be superior if you are believers.", ref:"Quran 3:139" },
+  { ar:"وَاسْتَعِينُوا بِالصَّبْرِ وَالصَّلَاةِ", en:"Seek help through patience and prayer.", ref:"Quran 2:45" },
+  { ar:"فَإِنَّ مَعَ الْعُسْرِ يُسْرًا", en:"For indeed, with hardship comes ease.", ref:"Quran 94:5" },
+  { ar:"وَمَن جَاهَدَ فَإِنَّمَا يُجَاهِدُ لِنَفْسِهِ", en:"And whoever strives only strives for the benefit of himself.", ref:"Quran 29:6" },
+  { ar:"رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً", en:"Our Lord, give us good in this world and good in the next.", ref:"Quran 2:201" }
+];
+
+// STEPS DEFINITION
+const STEPS = [
+  {
+    id: 'fajr',
+    icon: '🌙',
+    name: 'Fajr prayer',
+    sub: 'The first victory of the day',
+    time: '5 min',
+    render: renderFajr,
+    canSkip: false
+  },
+  {
+    id: 'quran',
+    icon: '📖',
+    name: 'One Quran verse',
+    sub: 'Read with your heart present',
+    time: '5 min',
+    render: renderQuran,
+    canSkip: false
+  },
+  {
+    id: 'affirmations',
+    icon: '🪞',
+    name: 'Affirmations',
+    sub: 'Say them aloud in the mirror',
+    time: '3 min',
+    render: renderAffirmations,
+    canSkip: false
+  },
+  {
+    id: 'intention',
+    icon: '🎯',
+    name: 'Daily intention',
+    sub: 'One clear goal for today',
+    time: '2 min',
+    render: renderIntention,
+    canSkip: false
+  },
+  {
+    id: 'review',
+    icon: '⚖️',
+    name: 'Yesterday\'s review',
+    sub: 'One honest sentence',
+    time: '2 min',
+    render: renderReview,
+    canSkip: true
+  }
+];
+
+// ════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════
+
+let DB = { days: {}, streak: 0, best: 0 };
+let today = {};  // current session state
+let curStep = 0;
+let stepData = {}; // temp data per step
+let curPage = 'splash';
+
+function dk(offset = 0) {
+  const d = new Date();
+  d.setDate(d.getDate() + offset);
+  return d.toISOString().slice(0, 10);
+}
+
+function load() {
+  try { const s = localStorage.getItem('hero_morning_v1'); if (s) DB = JSON.parse(s); } catch(e) {}
+  today = DB.days[dk()] || {};
+}
+
+function save() {
+  DB.days[dk()] = today;
+  calcStreak();
+  try { localStorage.setItem('hero_morning_v1', JSON.stringify(DB)); } catch(e) {}
+}
+
+function calcStreak() {
+  let s = 0;
+  const todayKey = dk();
+  let d = new Date();
+  for (let i = 0; i < 365; i++) {
+    const k = d.toISOString().slice(0, 10);
+    const day = DB.days[k];
+    if (day && day.complete) s++;
+    else if (k !== todayKey) break;
+    d.setDate(d.getDate() - 1);
+  }
+  DB.streak = s;
+  if (s > DB.best) DB.best = s;
+}
+
+// ════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════
+
+function show(page) {
+  document.getElementById('l-' + curPage).classList.add('gone');
+  curPage = page;
+  document.getElementById('l-' + page).classList.remove('gone');
+  if (page === 'home') refreshHome();
+  if (page === 'history') renderHistory();
+}
+
+// ════════════════════════════════════════
+// HOME
+// ════════════════════════════════════════
+
+function refreshHome() {
+  const now = new Date();
+  const h = now.getHours();
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('home-date').textContent = days[now.getDay()] + ' · ' + months[now.getMonth()] + ' ' + now.getDate();
+
+  const gr = h < 12 ? 'Good <strong>morning.</strong>' : h < 17 ? 'Good <strong>afternoon.</strong>' : 'Good <strong>evening.</strong>';
+  document.getElementById('home-greeting').innerHTML = gr;
+
+  load();
+  calcStreak();
+  document.getElementById('s-cur').textContent = DB.streak;
+  document.getElementById('s-best').textContent = DB.best;
+  document.getElementById('s-days').textContent = Object.values(DB.days).filter(d => d.complete).length;
+
+  // Progress
+  const done = STEPS.filter(s => today[s.id + '_done']).length;
+  const pct = Math.round(done / STEPS.length * 100);
+  setArc(pct);
+
+  // Start button
+  const complete = !!today.complete;
+  const startBtn = document.getElementById('start-btn');
+  const doneMsg = document.getElementById('done-msg');
+  if (complete) {
+    startBtn.style.display = 'none';
+    doneMsg.style.display = 'block';
+  } else {
+    startBtn.style.display = 'block';
+    doneMsg.style.display = 'none';
+    const nextIdx = STEPS.findIndex(s => !today[s.id + '_done']);
+    startBtn.textContent = done === 0 ? 'Begin ritual' : 'Continue — step ' + (nextIdx + 1) + ' of ' + STEPS.length;
+  }
+
+  renderStepsPreview();
+}
+
+function setArc(pct) {
+  const total = 251.3;
+  const offset = total - (total * pct / 100);
+  document.getElementById('arc-fill').style.strokeDashoffset = offset;
+  document.getElementById('arc-pct').textContent = pct + '%';
+  const labels = ['Begin your ritual','Keep going…','Halfway there','Almost done','Ritual complete ✓'];
+  const li = pct === 100 ? 4 : pct > 60 ? 3 : pct > 40 ? 2 : pct > 0 ? 1 : 0;
+  document.getElementById('arc-label').textContent = labels[li];
+}
+
+function renderStepsPreview() {
+  const wrap = document.getElementById('steps-preview');
+  wrap.innerHTML = '';
+  STEPS.forEach((s, i) => {
+    const done = !!today[s.id + '_done'];
+    const nextIdx = STEPS.findIndex(st => !today[st.id + '_done']);
+    const isNext = i === nextIdx;
+    const row = document.createElement('div');
+    row.className = 'step-preview-row';
+    row.innerHTML = `
+      <div class="spr-icon ${done ? 'done' : isNext ? 'active' : ''}">${done ? '✓' : s.icon}</div>
+      <div class="spr-text">
+        <div class="spr-name">${s.name}</div>
+        <div class="spr-sub">${s.sub}</div>
+      </div>
+      <div class="spr-time">${done ? '' : s.time}</div>
+      ${done ? '<div class="spr-check">✓</div>' : ''}`;
+    if (!today.complete) row.onclick = () => jumpToStep(i);
+    wrap.appendChild(row);
+  });
+}
+
+function jumpToStep(i) {
+  curStep = i;
+  showStep(curStep);
+  show('step');
+}
+
+// ════════════════════════════════════════
+// RITUAL
+// ════════════════════════════════════════
+
+function beginRitual() {
+  curStep = STEPS.findIndex(s => !today[s.id + '_done']);
+  if (curStep < 0) curStep = 0;
+  stepData = {};
+  showStep(curStep);
+  show('step');
+}
+
+function showStep(idx) {
+  const s = STEPS[idx];
+  document.getElementById('step-tb-title').textContent = s.icon + ' ' + s.name;
+  document.getElementById('step-label').textContent = 'Step ' + (idx + 1) + ' of ' + STEPS.length;
+  document.getElementById('step-name').textContent = s.name;
+  document.getElementById('step-pfill').style.width = ((idx) / STEPS.length * 100) + '%';
+  document.getElementById('step-skip').style.display = s.canSkip ? '' : 'none';
+  document.getElementById('step-next').disabled = false;
+  document.getElementById('step-next').textContent = idx === STEPS.length - 1 ? 'Complete ritual ✓' : 'Done — next step →';
+  s.render();
+}
+
+function exitStep() {
+  save();
+  show('home');
+}
+
+function skipStep() {
+  today[STEPS[curStep].id + '_done'] = true;
+  today[STEPS[curStep].id + '_skipped'] = true;
+  save();
+  advanceStep();
+}
+
+function nextStep() {
+  // Collect any data from current step
+  collectStepData(curStep);
+  today[STEPS[curStep].id + '_done'] = true;
+  save();
+  advanceStep();
+}
+
+function advanceStep() {
+  curStep++;
+  if (curStep >= STEPS.length) {
+    today.complete = true;
+    save();
+    finishRitual();
+  } else {
+    showStep(curStep);
+  }
+}
+
+function collectStepData(idx) {
+  const s = STEPS[idx];
+  if (s.id === 'quran') {
+    const v = document.getElementById('verse-reflect-input');
+    if (v) today.quran_reflection = v.value;
+  }
+  if (s.id === 'intention') {
+    const v = document.getElementById('intention-input');
+    if (v) today.intention = v.value;
+  }
+  if (s.id === 'review') {
+    const v = document.getElementById('review-input');
+    if (v) today.review = v.value;
+    today.review_score = stepData.rating;
+  }
+}
+
+function finishRitual() {
+  calcStreak();
+  document.getElementById('c-streak').textContent = DB.streak;
+  show('complete');
+}
+
+// ════════════════════════════════════════
+// STEP RENDERERS
+// ════════════════════════════════════════
+
+function renderFajr() {
+  const done = !!today.fajr_prayed;
+  document.getElementById('step-body').innerHTML = `
+    <span class="step-icon-large">🌙</span>
+    <div class="step-content">
+      <button class="fajr-check-btn ${done ? 'checked' : ''}" id="fajr-btn" onclick="toggleFajr()">
+        ${done
+          ? '✓ &nbsp; Fajr prayed — with heart present'
+          : 'I prayed Fajr on time,<br>with khushu\''}
+      </button>
+      <div class="fajr-tip">Before pressing — take 5 seconds of silence.<br>Remind yourself: <em style="color:var(--dawn)">I just stood before Allah.</em></div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--rim);border-radius:var(--r);padding:16px;margin-top:4px;">
+      <div style="font-family:var(--sans);font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;">Morning adhkar</div>
+      <div style="font-family:var(--serif);font-size:15px;color:var(--silver);line-height:1.7;font-style:italic;">
+        Ayat al-Kursi · The three Quls (Al-Ikhlas, Al-Falaq, An-Nas) · Morning supplications
+      </div>
+    </div>`;
+}
+
+function toggleFajr() {
+  today.fajr_prayed = !today.fajr_prayed;
+  save();
+  renderFajr();
+}
+
+function renderQuran() {
+  const today_d = new Date().getDate();
+  const verse = VERSES[today_d % VERSES.length];
+  const saved = today.quran_reflection || '';
+  document.getElementById('step-body').innerHTML = `
+    <span class="step-icon-large">📖</span>
+    <div class="step-content">
+      <div class="verse-box">
+        <div class="verse-ar">${verse.ar}</div>
+        <div class="verse-en">"${verse.en}"</div>
+        <div class="verse-ref">${verse.ref}</div>
+      </div>
+      <div style="font-family:var(--sans);font-size:12px;color:var(--muted);margin-bottom:8px;letter-spacing:.04em;">What does this mean to you today?</div>
+      <textarea class="verse-reflect" id="verse-reflect-input" placeholder="Write one honest thought…" rows="3">${saved}</textarea>
+    </div>`;
+}
+
+function renderAffirmations() {
+  const read = today.affs_read || [];
+  const allRead = read.length >= AFFIRMATIONS.length;
+  let html = `<span class="step-icon-large">🪞</span>
+    <div class="aff-hint">Say each one aloud. Tap when done.</div>
+    <div class="step-content">`;
+  AFFIRMATIONS.forEach((a, i) => {
+    const isRead = read.includes(i);
+    html += `<div class="aff-item ${isRead ? 'read' : ''}" id="aff-${i}" onclick="markAff(${i})">
+      <div class="aff-item-text">${a}</div>
+      <div class="aff-item-check">Said aloud ✓</div>
+    </div>`;
+  });
+  html += '</div>';
+  document.getElementById('step-body').innerHTML = html;
+  if (!today.affs_read) today.affs_read = [];
+}
+
+function markAff(i) {
+  if (!today.affs_read) today.affs_read = [];
+  if (!today.affs_read.includes(i)) {
+    today.affs_read.push(i);
+    save();
+  }
+  document.getElementById('aff-' + i).classList.add('read');
+}
+
+function renderIntention() {
+  const saved = today.intention || '';
+  document.getElementById('step-body').innerHTML = `
+    <span class="step-icon-large">🎯</span>
+    <div class="step-content">
+      <div class="intention-prompt">If today ends and you did only one thing — what must it be?</div>
+      <textarea class="intention-area" id="intention-input" placeholder="Today I will…" rows="4">${saved}</textarea>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--rim);border-radius:var(--r);padding:14px;margin-top:4px;">
+      <div style="font-family:var(--sans);font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;">Make it specific</div>
+      <div style="font-family:var(--serif);font-size:14px;color:var(--muted);font-style:italic;line-height:1.6;">Not "be productive" — but "finish the report before 3pm" or "go to the gym at 7".</div>
+    </div>`;
+}
+
+function renderReview() {
+  const saved = today.review || '';
+  const savedScore = today.review_score;
+  let dotsHtml = '';
+  for (let i = 1; i <= 10; i++) {
+    let cls = 'r-dot';
+    if (savedScore !== undefined && savedScore === i) {
+      cls += i <= 4 ? ' sel-low' : i <= 7 ? ' sel-mid' : ' sel-high';
+    }
+    dotsHtml += `<div class="${cls}" onclick="setReviewScore(${i})" id="rd-${i}">${i}</div>`;
+  }
+  document.getElementById('step-body').innerHTML = `
+    <span class="step-icon-large">⚖️</span>
+    <div class="step-content">
+      <div class="rating-question">How did yesterday go, honestly?</div>
+      <div class="rating-scale">${dotsHtml}</div>
+      <div class="rating-labels"><span>Struggled</span><span>Okay</span><span>Strong</span></div>
+      <textarea class="rating-reflection" id="review-input" placeholder="What did the man I want to become do yesterday — and what would he have done differently?" rows="4">${saved}</textarea>
+    </div>`;
+}
+
+function setReviewScore(v) {
+  stepData.rating = v;
+  for (let i = 1; i <= 10; i++) {
+    const el = document.getElementById('rd-' + i);
+    el.className = 'r-dot' + (i === v ? (v <= 4 ? ' sel-low' : v <= 7 ? ' sel-mid' : ' sel-high') : '');
+  }
+}
+
+// ════════════════════════════════════════
+// HISTORY
+// ════════════════════════════════════════
+
+function renderHistory() {
+  const list = document.getElementById('hist-list');
+  list.innerHTML = '';
+  const keys = Object.keys(DB.days).sort().reverse();
+  if (!keys.length) {
+    list.innerHTML = '<div class="hist-empty">Your history begins<br>after your first ritual.</div>';
+    return;
+  }
+  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  keys.forEach(k => {
+    const d = DB.days[k];
+    if (!d) return;
+    const dt = new Date(k);
+    const label = dayNames[dt.getDay()] + ' ' + monthNames[dt.getMonth()] + ' ' + dt.getDate();
+    const score = d.review_score ? d.review_score + '/10' : '—';
+    const stepsN = STEPS.filter(s => d[s.id + '_done']).length;
+    const el = document.createElement('div');
+    el.className = 'hist-day';
+    el.innerHTML = `
+      <div class="hd-top" onclick="this.closest('.hist-day').querySelector('.hd-detail').classList.toggle('open')">
+        <div class="hd-dot" style="background:${d.complete ? 'var(--dawn)' : 'var(--muted)'}"></div>
+        <div class="hd-date">${label} · ${stepsN}/${STEPS.length} steps</div>
+        <div class="hd-score">${score}</div>
+      </div>
+      ${d.intention ? `<div class="hd-intention">"${d.intention}"</div>` : ''}
+      <div class="hd-detail">
+        ${d.quran_reflection ? `<div class="hd-detail-row">QURAN REFLECTION</div><div class="hd-detail-val">"${d.quran_reflection}"</div>` : ''}
+        ${d.review ? `<div class="hd-detail-row">YESTERDAY'S REVIEW</div><div class="hd-detail-val">"${d.review}"</div>` : ''}
+      </div>`;
+    list.appendChild(el);
+  });
+}
+
+// ════════════════════════════════════════
+// BOTTOM NAV (Home page)
+// ════════════════════════════════════════
+
+// We add a small floating history button instead of a full nav bar to keep it minimal
+window.addEventListener('DOMContentLoaded', () => {
+  const histBtn = document.createElement('button');
+  histBtn.style.cssText = `position:fixed;bottom:24px;right:20px;width:44px;height:44px;border-radius:50%;background:var(--bg3);border:1px solid var(--rim);font-size:18px;cursor:pointer;z-index:50;transition:all .2s;display:none;`;
+  histBtn.textContent = '📚';
+  histBtn.id = 'hist-fab';
+  histBtn.onclick = () => show('history');
+  document.body.appendChild(histBtn);
+});
+
+function showHistBtn(v) {
+  const b = document.getElementById('hist-fab');
+  if (b) b.style.display = v ? 'flex' : 'none';
+  if (b) b.style.alignItems = 'center';
+  if (b) b.style.justifyContent = 'center';
+}
+
+// ════════════════════════════════════════
+// TOAST
+// ════════════════════════════════════════
+
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('up');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('up'), 2200);
+}
+
+// ════════════════════════════════════════
+// OVERRIDE show() TO MANAGE FAB
+// ════════════════════════════════════════
+
+const _show = show;
+window.show = function(page) {
+  _show(page);
+  showHistBtn(page === 'home');
+};
+
+// ════════════════════════════════════════
+// PWA
+// ════════════════════════════════════════
+
+const mf = { name:"The Morning", short_name:"Morning", start_url:".", display:"standalone", background_color:"#09090f", theme_color:"#09090f", icons:[{src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%2309090f'/><text y='.9em' font-size='75' x='12'>🌙</text></svg>",sizes:"192x192",type:"image/svg+xml"}] };
+const mBlob = new Blob([JSON.stringify(mf)], {type:'application/json'});
+document.getElementById('pwa-manifest').href = URL.createObjectURL(mBlob);
+
+if ('serviceWorker' in navigator) {
+  const sw = `const C='hero-morning-v1';self.addEventListener('install',e=>{self.skipWaiting();});self.addEventListener('fetch',e=>{e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));});`;
+  navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'text/javascript'}))).catch(()=>{});
+}
+
+// ════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════
+
+load();
+</script>
+</body>
+</html>

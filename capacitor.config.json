@@ -1,0 +1,9 @@
+{
+  "appId": "com.themorning.ritual",
+  "appName": "The Morning",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "android": {
+    "backgroundColor": "#09090f"
+  }
+}

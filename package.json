@@ -1,0 +1,10 @@
+{
+  "name": "the-morning-app",
+  "version": "1.0.0",
+  "description": "Daily morning ritual",
+  "dependencies": {
+    "@capacitor/core": "5.0.0",
+    "@capacitor/android": "5.0.0",
+    "@capacitor/cli": "5.0.0"
+  }
+}
